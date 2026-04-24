@@ -36,25 +36,6 @@ export function MazeGame({ onComplete }: MazeGameProps) {
   onCompleteRef.current = onComplete;
   const touchStart = useRef<{x:number;y:number}|null>(null);
  
-  // Measure the actual rendered inner canvas size in pixels
-  const canvasRef = useRef<SVGSVGElement>(null);
-  const [canvasPx, setCanvasPx] = useState(300);
- 
-  useEffect(()=>{
-    const measure = () => {
-      if (canvasRef.current) {
-        setCanvasPx(canvasRef.current.clientWidth);
-      }
-    };
-    measure();
-    // small delay to let layout settle
-    const t = setTimeout(measure, 50);
-    window.addEventListener("resize", measure);
-    return () => { clearTimeout(t); window.removeEventListener("resize", measure); };
-  }, []);
- 
-  const cell = canvasPx / COLS; // exact px per cell
- 
   const move = useCallback((dir:Dir)=>{
     if (wonRef.current) return;
     setPos(p=>{
@@ -99,16 +80,14 @@ export function MazeGame({ onComplete }: MazeGameProps) {
     touchStart.current=null;
   };
  
-  // Token: 60% of cell, centered in cell
-  const tokenR  = cell * 0.30; // radius
-  const tokenCx = (c:number) => c * cell + cell / 2;
-  const tokenCy = (r:number) => r * cell + cell / 2;
-  const fontSize = Math.max(10, Math.floor(cell * 0.34));
+  // SVG viewBox is COLS × ROWS — 1 unit = 1 cell
+  // strokeWidth in these units: 0.05 = thin crisp lines at any size
+  const SW = 0.05;
+  const WC = "#cec0a4";
+  const GWC = "#d4a030";
  
-  // Wall thickness: fixed 2px regardless of board size
-  const WALL = 2;
-  const WALL_COLOR = "#c8b896";
-  const GOAL_WALL  = "#d4a22a";
+  // Token radius: 0.3 units (leaves ~0.2 gap each side inside 1-unit cell)
+  const TR = 0.30;
  
   return (
     <section
@@ -131,13 +110,12 @@ export function MazeGame({ onComplete }: MazeGameProps) {
         </p>
       </header>
  
-      {/* Board wrapper — square, fits viewport */}
+      {/* Board — square, fits screen */}
       <div
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         style={{
           flexShrink:0,
-          position:"relative",
           width:"min(calc(100vw - 32px), calc(100dvh - 264px), 400px)",
           aspectRatio:"1 / 1",
           background:"var(--bg-card)",
@@ -150,67 +128,66 @@ export function MazeGame({ onComplete }: MazeGameProps) {
         }}
       >
         {/*
-          Single SVG covers the full inner area.
-          viewBox matches clientWidth × clientHeight (square).
-          All coordinates are in real pixels — walls are exactly 2px thick.
-          Tokens are circles centered precisely in each cell.
-          No clipping needed.
+          viewBox="0 0 9 9" — each cell is exactly 1×1 unit.
+          preserveAspectRatio="xMidYMid meet" (default) keeps it square.
+          strokeWidth=0.05 stays thin at any rendered size.
+          Token circles are centered at (col+0.5, row+0.5) — always mid-cell.
+          The SVG fills 100% of the padded inner area, no overflow possible.
         */}
         <svg
-          ref={canvasRef}
+          viewBox={`0 0 ${COLS} ${ROWS}`}
           style={{ display:"block", width:"100%", height:"100%", borderRadius:10 }}
-          viewBox={`0 0 ${canvasPx} ${canvasPx}`}
-          shapeRendering="crispEdges"
         >
           {/* Background */}
-          <rect width={canvasPx} height={canvasPx} fill="#f9f5ec" rx={10}/>
+          <rect width={COLS} height={ROWS} fill="#f9f5ec" rx={0.3}/>
  
-          {/* Goal cell tint */}
-          <rect
-            x={goal.c * cell} y={goal.r * cell}
-            width={cell} height={cell}
-            fill="#fff3d0"
-          />
+          {/* Goal cell highlight */}
+          <rect x={goal.c} y={goal.r} width={1} height={1} fill="#fff3d0"/>
  
-          {/* ── Walls ── each wall is a line at exact pixel boundary */}
+          {/* Walls */}
           {grid.flat().map(({ r, c, walls }) => {
             const isGoal = r===goal.r && c===goal.c;
-            const wc = isGoal ? GOAL_WALL : WALL_COLOR;
-            const x0 = c * cell, y0 = r * cell;
-            const x1 = x0 + cell, y1 = y0 + cell;
+            const wc = isGoal ? GWC : WC;
             return (
               <g key={`${r}-${c}`}>
-                {walls.N && <line x1={x0} y1={y0} x2={x1} y2={y0} stroke={wc} strokeWidth={WALL} strokeLinecap="square"/>}
-                {walls.S && <line x1={x0} y1={y1} x2={x1} y2={y1} stroke={wc} strokeWidth={WALL} strokeLinecap="square"/>}
-                {walls.W && <line x1={x0} y1={y0} x2={x0} y2={y1} stroke={wc} strokeWidth={WALL} strokeLinecap="square"/>}
-                {walls.E && <line x1={x1} y1={y0} x2={x1} y2={y1} stroke={wc} strokeWidth={WALL} strokeLinecap="square"/>}
+                {walls.N && <line x1={c}   y1={r}   x2={c+1} y2={r}   stroke={wc} strokeWidth={SW} strokeLinecap="square"/>}
+                {walls.S && <line x1={c}   y1={r+1} x2={c+1} y2={r+1} stroke={wc} strokeWidth={SW} strokeLinecap="square"/>}
+                {walls.W && <line x1={c}   y1={r}   x2={c}   y2={r+1} stroke={wc} strokeWidth={SW} strokeLinecap="square"/>}
+                {walls.E && <line x1={c+1} y1={r}   x2={c+1} y2={r+1} stroke={wc} strokeWidth={SW} strokeLinecap="square"/>}
               </g>
             );
           })}
  
-          {/* ── Goal token ── */}
-          <circle
-            cx={tokenCx(goal.c)} cy={tokenCy(goal.r)}
-            r={tokenR}
-            fill="#d4922a"
-          />
+          {/* Goal token — centered in cell, never clips because circle fits within 1 unit */}
+          <circle cx={goal.c + 0.5} cy={goal.r + 0.5} r={TR} fill="#d4922a"/>
           <text
-            x={tokenCx(goal.c)} y={tokenCy(goal.r)}
+            x={goal.c + 0.5} y={goal.r + 0.5}
             textAnchor="middle" dominantBaseline="central"
-            fontSize={fontSize} style={{ userSelect:"none" }}
+            fontSize={0.38} style={{ userSelect:"none" }}
           >📜</text>
  
-          {/* ── Player token ── */}
+          {/* Player token */}
           <circle
-            cx={tokenCx(pos.c)} cy={tokenCy(pos.r)}
-            r={tokenR}
+            cx={pos.c + 0.5} cy={pos.r + 0.5} r={TR}
             fill={won ? "#d4922a" : "#3b82f6"}
-            style={{ transition:"cx 0.15s cubic-bezier(0.22,1,0.36,1), cy 0.15s cubic-bezier(0.22,1,0.36,1)" }}
-          />
+          >
+            <animate
+              attributeName="cx"
+              to={`${pos.c + 0.5}`}
+              dur="0.15s"
+              fill="freeze"
+            />
+            <animate
+              attributeName="cy"
+              to={`${pos.r + 0.5}`}
+              dur="0.15s"
+              fill="freeze"
+            />
+          </circle>
           <text
-            x={tokenCx(pos.c)} y={tokenCy(pos.r)}
+            x={pos.c + 0.5} y={pos.r + 0.5}
             textAnchor="middle" dominantBaseline="central"
-            fontSize={fontSize} style={{ userSelect:"none", pointerEvents:"none" }}
+            fontSize={0.38} style={{ userSelect:"none", pointerEvents:"none" }}
           >🎓</text>
         </svg>
       </div>
