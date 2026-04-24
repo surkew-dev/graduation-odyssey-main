@@ -35,27 +35,31 @@ export function MazeGame({ onComplete }: MazeGameProps) {
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
   const touchStart = useRef<{x:number;y:number}|null>(null);
-  const boardRef = useRef<HTMLDivElement>(null);
-  const [cellPx, setCellPx] = useState(38);
  
-  // Measure actual cell size after render
+  // Measure the actual rendered inner canvas size in pixels
+  const canvasRef = useRef<SVGSVGElement>(null);
+  const [canvasPx, setCanvasPx] = useState(300);
+ 
   useEffect(()=>{
     const measure = () => {
-      if (boardRef.current) {
-        const inner = boardRef.current.clientWidth - 16; // 8px padding each side
-        setCellPx(inner / COLS);
+      if (canvasRef.current) {
+        setCanvasPx(canvasRef.current.clientWidth);
       }
     };
     measure();
+    // small delay to let layout settle
+    const t = setTimeout(measure, 50);
     window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    return () => { clearTimeout(t); window.removeEventListener("resize", measure); };
   }, []);
+ 
+  const cell = canvasPx / COLS; // exact px per cell
  
   const move = useCallback((dir:Dir)=>{
     if (wonRef.current) return;
     setPos(p=>{
-      const cell = grid[p.r][p.c];
-      if (cell.walls[dir]) return p;
+      const c = grid[p.r][p.c];
+      if (c.walls[dir]) return p;
       const np = {...p};
       if (dir==="N") np.r--; if (dir==="S") np.r++;
       if (dir==="E") np.c++; if (dir==="W") np.c--;
@@ -95,9 +99,16 @@ export function MazeGame({ onComplete }: MazeGameProps) {
     touchStart.current=null;
   };
  
-  // Token size: 62% of cell, never bigger than cell-4px
-  const tokenPx = Math.floor(Math.min(cellPx * 0.62, cellPx - 5));
-  const iconPx  = Math.max(8, Math.floor(tokenPx * 0.48));
+  // Token: 60% of cell, centered in cell
+  const tokenR  = cell * 0.30; // radius
+  const tokenCx = (c:number) => c * cell + cell / 2;
+  const tokenCy = (r:number) => r * cell + cell / 2;
+  const fontSize = Math.max(10, Math.floor(cell * 0.34));
+ 
+  // Wall thickness: fixed 2px regardless of board size
+  const WALL = 2;
+  const WALL_COLOR = "#c8b896";
+  const GOAL_WALL  = "#d4a22a";
  
   return (
     <section
@@ -106,12 +117,10 @@ export function MazeGame({ onComplete }: MazeGameProps) {
         minHeight:"100dvh",
         display:"flex", flexDirection:"column",
         alignItems:"center", justifyContent:"center",
-        gap:14,
-        padding:"70px 16px 20px",
+        gap:14, padding:"70px 16px 20px",
         boxSizing:"border-box",
       }}
     >
-      {/* Header */}
       <header style={{ textAlign:"center", flexShrink:0 }}>
         <p className="label-caps" style={{ marginBottom:4 }}>Challenge 1 · 3</p>
         <h2 className="display" style={{ fontSize:"clamp(1.4rem,5vw,1.8rem)", color:"var(--ink)" }}>
@@ -122,128 +131,91 @@ export function MazeGame({ onComplete }: MazeGameProps) {
         </p>
       </header>
  
-      {/* ── Board ── */}
+      {/* Board wrapper — square, fits viewport */}
       <div
-        ref={boardRef}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         style={{
           flexShrink:0,
           position:"relative",
-          /*
-           * Square board:
-           * – never wider than viewport minus 32px margin
-           * – never taller than viewport minus 260px (header + dpad + gaps + browser chrome)
-           * – max 400px
-           */
-          width: "min(calc(100vw - 32px), calc(100dvh - 260px), 400px)",
+          width:"min(calc(100vw - 32px), calc(100dvh - 264px), 400px)",
           aspectRatio:"1 / 1",
           background:"var(--bg-card)",
           border:"2px solid var(--border-soft)",
           borderRadius:18,
-          padding:8,
+          padding:6,
           boxShadow:"var(--shadow-lg)",
           touchAction:"none",
           boxSizing:"border-box",
         }}
       >
-        {/* Inner area — NO overflow:hidden so tokens never get clipped */}
-        <div
-          style={{
-            position:"relative",
-            width:"100%", height:"100%",
-            borderRadius:10,
-            background:"#f9f5ec",
-          }}
+        {/*
+          Single SVG covers the full inner area.
+          viewBox matches clientWidth × clientHeight (square).
+          All coordinates are in real pixels — walls are exactly 2px thick.
+          Tokens are circles centered precisely in each cell.
+          No clipping needed.
+        */}
+        <svg
+          ref={canvasRef}
+          style={{ display:"block", width:"100%", height:"100%", borderRadius:10 }}
+          viewBox={`0 0 ${canvasPx} ${canvasPx}`}
+          shapeRendering="crispEdges"
         >
-          {/* ── Walls rendered as SVG — perfectly pixel-aligned, no clipping issues ── */}
-          <svg
-            style={{ position:"absolute", inset:0, width:"100%", height:"100%", display:"block" }}
-            viewBox={`0 0 ${COLS} ${ROWS}`}
-            preserveAspectRatio="none"
-            shapeRendering="crispEdges"
-          >
-            {/* Goal cell highlight */}
-            <rect
-              x={goal.c} y={goal.r}
-              width={1} height={1}
-              fill="#fff3d0"
-            />
+          {/* Background */}
+          <rect width={canvasPx} height={canvasPx} fill="#f9f5ec" rx={10}/>
  
-            {/* Walls */}
-            {grid.flat().map(cell => {
-              const { r, c, walls } = cell;
-              const isGoal = r===goal.r && c===goal.c;
-              const wc = isGoal ? "#e0aa30" : "#cec0a4";
-              const sw = 0.06; // stroke-width in SVG units
-              return (
-                <g key={`${r}-${c}`}>
-                  {walls.N && <line x1={c} y1={r}   x2={c+1} y2={r}   stroke={wc} strokeWidth={sw}/>}
-                  {walls.S && <line x1={c} y1={r+1} x2={c+1} y2={r+1} stroke={wc} strokeWidth={sw}/>}
-                  {walls.W && <line x1={c} y1={r}   x2={c}   y2={r+1} stroke={wc} strokeWidth={sw}/>}
-                  {walls.E && <line x1={c+1} y1={r} x2={c+1} y2={r+1} stroke={wc} strokeWidth={sw}/>}
-                </g>
-              );
-            })}
-          </svg>
+          {/* Goal cell tint */}
+          <rect
+            x={goal.c * cell} y={goal.r * cell}
+            width={cell} height={cell}
+            fill="#fff3d0"
+          />
+ 
+          {/* ── Walls ── each wall is a line at exact pixel boundary */}
+          {grid.flat().map(({ r, c, walls }) => {
+            const isGoal = r===goal.r && c===goal.c;
+            const wc = isGoal ? GOAL_WALL : WALL_COLOR;
+            const x0 = c * cell, y0 = r * cell;
+            const x1 = x0 + cell, y1 = y0 + cell;
+            return (
+              <g key={`${r}-${c}`}>
+                {walls.N && <line x1={x0} y1={y0} x2={x1} y2={y0} stroke={wc} strokeWidth={WALL} strokeLinecap="square"/>}
+                {walls.S && <line x1={x0} y1={y1} x2={x1} y2={y1} stroke={wc} strokeWidth={WALL} strokeLinecap="square"/>}
+                {walls.W && <line x1={x0} y1={y0} x2={x0} y2={y1} stroke={wc} strokeWidth={WALL} strokeLinecap="square"/>}
+                {walls.E && <line x1={x1} y1={y0} x2={x1} y2={y1} stroke={wc} strokeWidth={WALL} strokeLinecap="square"/>}
+              </g>
+            );
+          })}
  
           {/* ── Goal token ── */}
-          <div style={{
-            position:"absolute",
-            width: cellPx,
-            height: cellPx,
-            left: goal.c * cellPx,
-            top:  goal.r * cellPx,
-            display:"flex", alignItems:"center", justifyContent:"center",
-            pointerEvents:"none",
-            zIndex:2,
-          }}>
-            <div style={{
-              width: tokenPx, height: tokenPx,
-              borderRadius:"50%",
-              background:"var(--gold)",
-              display:"flex", alignItems:"center", justifyContent:"center",
-              boxShadow:"0 0 10px rgb(212 146 42/0.55)",
-              animation:"pulse-soft 2s ease-in-out infinite",
-              fontSize: iconPx,
-              lineHeight:1,
-              userSelect:"none",
-            }}>
-              📜
-            </div>
-          </div>
+          <circle
+            cx={tokenCx(goal.c)} cy={tokenCy(goal.r)}
+            r={tokenR}
+            fill="#d4922a"
+          />
+          <text
+            x={tokenCx(goal.c)} y={tokenCy(goal.r)}
+            textAnchor="middle" dominantBaseline="central"
+            fontSize={fontSize} style={{ userSelect:"none" }}
+          >📜</text>
  
           {/* ── Player token ── */}
-          <div style={{
-            position:"absolute",
-            width: cellPx,
-            height: cellPx,
-            left: pos.c * cellPx,
-            top:  pos.r * cellPx,
-            display:"flex", alignItems:"center", justifyContent:"center",
-            pointerEvents:"none",
-            zIndex:3,
-            transition:"left 0.15s cubic-bezier(0.22,1,0.36,1), top 0.15s cubic-bezier(0.22,1,0.36,1)",
-          }}>
-            <div style={{
-              width: tokenPx, height: tokenPx,
-              borderRadius:"50%",
-              background: won ? "var(--gold)" : "var(--sky)",
-              display:"flex", alignItems:"center", justifyContent:"center",
-              boxShadow:`0 0 10px ${won?"rgb(212 146 42/0.6)":"rgb(59 130 246/0.5)"}`,
-              transform: won ? "scale(1.15)" : "scale(1)",
-              transition:"all 0.3s cubic-bezier(0.34,1.56,0.64,1)",
-              fontSize: iconPx,
-              lineHeight:1,
-              userSelect:"none",
-            }}>
-              🎓
-            </div>
-          </div>
-        </div>
+          <circle
+            cx={tokenCx(pos.c)} cy={tokenCy(pos.r)}
+            r={tokenR}
+            fill={won ? "#d4922a" : "#3b82f6"}
+            style={{ transition:"cx 0.15s cubic-bezier(0.22,1,0.36,1), cy 0.15s cubic-bezier(0.22,1,0.36,1)" }}
+          />
+          <text
+            x={tokenCx(pos.c)} y={tokenCy(pos.r)}
+            textAnchor="middle" dominantBaseline="central"
+            fontSize={fontSize} style={{ userSelect:"none", pointerEvents:"none" }}
+          >🎓</text>
+        </svg>
       </div>
  
-      {/* ── D-pad ── */}
+      {/* D-pad */}
       <div style={{
         flexShrink:0,
         display:"grid",
@@ -254,13 +226,11 @@ export function MazeGame({ onComplete }: MazeGameProps) {
         <span/>
         <DBtn onClick={()=>move("N")} label="Up"><ChevronUp size={22}/></DBtn>
         <span/>
- 
         <DBtn onClick={()=>move("W")} label="Left"><ChevronLeft size={22}/></DBtn>
         <div style={{ borderRadius:13, background:"var(--bg-muted)", border:"1.5px solid var(--border-soft)", display:"grid", placeItems:"center" }}>
           <div style={{ width:7, height:7, borderRadius:"50%", background:"var(--border)" }}/>
         </div>
         <DBtn onClick={()=>move("E")} label="Right"><ChevronRight size={22}/></DBtn>
- 
         <span/>
         <DBtn onClick={()=>move("S")} label="Down"><ChevronDown size={22}/></DBtn>
         <span/>
@@ -273,12 +243,8 @@ export function MazeGame({ onComplete }: MazeGameProps) {
  
 function DBtn({ children, onClick, label }: { children:React.ReactNode; onClick:()=>void; label:string }) {
   return (
-    <button
-      onClick={onClick}
-      aria-label={label}
-      className="btn-game"
-      style={{ width:50, height:50, borderRadius:14, display:"flex", alignItems:"center", justifyContent:"center" }}
-    >
+    <button onClick={onClick} aria-label={label} className="btn-game"
+      style={{ width:50, height:50, borderRadius:14, display:"flex", alignItems:"center", justifyContent:"center" }}>
       {children}
     </button>
   );
