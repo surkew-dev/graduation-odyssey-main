@@ -1,0 +1,257 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light palette */
+  --bg:        #f5f0e8;
+  --bg-card:   #fffdf8;
+  --bg-muted:  #eee8d8;
+  --border:    #ddd4be;
+  --border-soft:#e8e0cc;
+
+  --ink:       #2a2118;
+  --ink-2:     #5a4e3c;
+  --ink-3:     #8a7b66;
+  --ink-4:     #b8a990;
+
+  --gold:      #d4922a;
+  --gold-2:    #f0b84a;
+  --gold-3:    #fdd878;
+  --gold-bg:   #fff8e6;
+  --gold-border:#f0c860;
+
+  --sky:       #3b82f6;
+  --sky-2:     #60a5fa;
+  --sky-bg:    #eff6ff;
+  --sky-border:#bfdbfe;
+
+  --rose:      #e05555;
+  --rose-bg:   #fef2f2;
+  --rose-border:#fecaca;
+
+  --green:     #22c55e;
+  --green-bg:  #f0fdf4;
+
+  --purple:    #8b5cf6;
+  --purple-bg: #f5f3ff;
+
+  --shadow-sm: 0 1px 4px rgb(42 33 24 / 0.08);
+  --shadow-md: 0 4px 16px rgb(42 33 24 / 0.10);
+  --shadow-lg: 0 12px 40px rgb(42 33 24 / 0.14);
+  --shadow-xl: 0 24px 64px rgb(42 33 24 / 0.16);
+
+  --radius-sm: 10px;
+  --radius:    16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+
+  /* keep shadcn happy */
+  --background: 40 30% 95%;
+  --foreground:  30 25% 14%;
+  --card:        40 50% 99%;
+  --card-foreground: 30 25% 14%;
+  --popover:     40 50% 99%;
+  --popover-foreground: 30 25% 14%;
+  --primary:     36 72% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary:   40 20% 92%;
+  --secondary-foreground: 30 25% 20%;
+  --muted:       40 20% 92%;
+  --muted-foreground: 30 15% 45%;
+  --accent:      36 72% 50%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border-hsl:  40 20% 85%;
+  --input:       40 20% 85%;
+  --ring:        36 72% 50%;
+  --radius:      1rem;
+  --sidebar-background: 40 30% 95%;
+  --sidebar-foreground: 30 25% 14%;
+  --sidebar-primary: 36 72% 50%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 40 20% 92%;
+  --sidebar-accent-foreground: 30 25% 20%;
+  --sidebar-border: 40 20% 85%;
+  --sidebar-ring: 36 72% 50%;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; }
+
+body {
+  font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+  background-color: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection { background: var(--gold-3); color: var(--ink); }
+
+/* ── Decorative bg pattern ── */
+.page-bg {
+  min-height: 100dvh;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, #fff8e6 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 110%, #eff6ff 0%, transparent 60%),
+    var(--bg);
+}
+
+.dots-bg {
+  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.card-gold {
+  background: var(--gold-bg);
+  border: 1.5px solid var(--gold-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md), 0 0 0 4px rgb(240 184 74 / 0.12);
+}
+
+/* ── Buttons ── */
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 28px;
+  background: var(--gold);
+  color: #fff;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #a06018, var(--shadow-md);
+  transition: transform 0.15s, box-shadow 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #a06018, var(--shadow-lg); }
+.btn-primary:active { transform: translateY(2px); box-shadow: 0 2px 0 #a06018, var(--shadow-sm); }
+
+.btn-outline {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 20px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-outline:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-bg); }
+
+.btn-game {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  color: var(--ink-2);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 3px 0 var(--border), var(--shadow-sm);
+  transition: transform 0.1s, box-shadow 0.1s;
+  user-select: none;
+}
+.btn-game:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--border); }
+
+/* ── Progress bar ── */
+.progress-track {
+  background: var(--bg-muted);
+  border: 1.5px solid var(--border-soft);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-2), var(--gold));
+  border-radius: 999px;
+  transition: width 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 8px rgb(212 146 42 / 0.4);
+}
+
+/* ── HUD pip ── */
+.pip { height: 4px; border-radius: 999px; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.pip-done  { background: var(--gold);  box-shadow: 0 0 6px rgb(212 146 42 / 0.6); width: 2.5rem; }
+.pip-active{ background: var(--sky);   box-shadow: 0 0 6px rgb(59 130 246 / 0.6); width: 1.75rem; animation: pip-pulse 1.4s ease-in-out infinite; }
+.pip-pending{ background: var(--border); width: 1rem; }
+
+/* ── Typography ── */
+.display {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+}
+.display-italic {
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+}
+.label-caps {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ── Animations ── */
+@keyframes pip-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+@keyframes float-up {
+  from { transform: translateY(100vh); opacity:0 }
+  10%  { opacity:0.8 }
+  90%  { opacity:0.8 }
+  to   { transform: translateY(-10vh) translateX(10px); opacity:0 }
+}
+@keyframes fade-in  { from{opacity:0} to{opacity:1} }
+@keyframes slide-up { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes scale-in { from{opacity:0;transform:scale(0.88)} to{opacity:1;transform:scale(1)} }
+@keyframes pop-up   { 0%{opacity:0;transform:translateY(0) scale(0.7)} 25%{opacity:1;transform:translateY(-14px) scale(1.1)} 100%{opacity:0;transform:translateY(-60px) scale(1)} }
+@keyframes banner-in{ 0%{opacity:0;transform:translateY(-20px) scale(0.92)} 60%{transform:translateY(3px) scale(1.02)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+@keyframes confetti-fall {
+  0%   { transform:translateY(-20vh) rotate(0deg) scaleX(1); opacity:1 }
+  50%  { transform:translateY(50vh)  rotate(360deg) scaleX(-1); opacity:0.9 }
+  100% { transform:translateY(120vh) rotate(720deg) scaleX(1); opacity:0 }
+}
+@keyframes cut-left  { to{ transform:translateX(-110%) } }
+@keyframes cut-right { to{ transform:translateX( 110%) } }
+@keyframes breathe   { 0%,100%{box-shadow:0 4px 0 #a06018,0 0 0 0 rgb(212 146 42/0.3)} 50%{box-shadow:0 4px 0 #a06018,0 0 0 8px rgb(212 146 42/0)} }
+@keyframes bob       { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+@keyframes pulse-soft{ 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.85;transform:scale(1.05)} }
+@keyframes sweep     { from{transform:scaleX(0);transform-origin:left} to{transform:scaleX(1);transform-origin:left} }
+
+.animate-fade-in  { animation: fade-in  0.5s ease both }
+.animate-slide-up { animation: slide-up 0.5s cubic-bezier(0.34,1.2,0.64,1) both }
+.animate-scale-in { animation: scale-in 0.45s cubic-bezier(0.34,1.56,0.64,1) both }
+
+@keyframes shimmer {
+  0%   { background-position: -200% center }
+  100% { background-position:  200% center }
+}
+.shimmer {
+  background: linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+
+/* pip-pulse already defined but ensure it exists for loading dots */
+@keyframes pip-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.7)} }
