@@ -166,29 +166,18 @@ export function MazeGame({ onComplete }: MazeGameProps) {
             fontSize={0.38} style={{ userSelect:"none" }}
           >📜</text>
  
-          {/* Player token */}
-          <circle
-            cx={pos.c + 0.5} cy={pos.r + 0.5} r={TR}
-            fill={won ? "#d4922a" : "#3b82f6"}
+          {/* Player token — CSS transition on the SVG <g> transform */}
+          <g
+            transform={`translate(${pos.c + 0.5}, ${pos.r + 0.5})`}
+            style={{ transition:"transform 0.15s cubic-bezier(0.22,1,0.36,1)" }}
           >
-            <animate
-              attributeName="cx"
-              to={`${pos.c + 0.5}`}
-              dur="0.15s"
-              fill="freeze"
-            />
-            <animate
-              attributeName="cy"
-              to={`${pos.r + 0.5}`}
-              dur="0.15s"
-              fill="freeze"
-            />
-          </circle>
-          <text
-            x={pos.c + 0.5} y={pos.r + 0.5}
-            textAnchor="middle" dominantBaseline="central"
-            fontSize={0.38} style={{ userSelect:"none", pointerEvents:"none" }}
-          >🎓</text>
+            <circle cx={0} cy={0} r={TR} fill={won ? "#d4922a" : "#3b82f6"}/>
+            <text
+              x={0} y={0}
+              textAnchor="middle" dominantBaseline="central"
+              fontSize={0.38} style={{ userSelect:"none", pointerEvents:"none" }}
+            >🎓</text>
+          </g>
         </svg>
       </div>
  
@@ -226,3 +215,4 @@ function DBtn({ children, onClick, label }: { children:React.ReactNode; onClick:
     </button>
   );
 }
+ 
