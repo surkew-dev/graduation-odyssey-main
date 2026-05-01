@@ -8,9 +8,9 @@ const EVENT = {
   graduate:    "Surkew",
   degree:      "Bachelor of Information Systems Engineering",
   institution: "Erbil Polytechnic University",
-  date:        "Monday, April 27, 2026",
-  time:        "2:00 PM",
-  venue:       "Erbil Polytechnic University & Campus 2",
+  date:        "Monday, May 3, 2026",
+  time:        "11:00 AM",
+  venue:       "Erbil Polytechnic University - Campus 2",
   venueLink:   "https://maps.app.goo.gl/XYiBwmaoWBToQr7Y9",
   dressCode:   "Smart casual · Navy & gold touches",
 };
