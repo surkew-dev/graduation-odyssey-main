@@ -8,13 +8,13 @@ const EVENT = {
   graduate:    "Surkew",
   degree:      "Bachelor of Information Systems Engineering",
   institution: "Erbil Polytechnic University",
-  date:        "Monday, May 3, 2026",
+  date:        "Monday, May 4, 2026",
   time:        "11:00 AM",
   venue:       "Erbil Polytechnic University - Campus 2",
   venueLink:   "https://maps.app.goo.gl/XYiBwmaoWBToQr7Y9",
   dressCode:   "Smart casual · Navy & gold touches",
 };
- 
+
 type Phase = "rsvp" | "accepted" | "card";
  
 export function UnlockScene({ onReplay }: UnlockSceneProps) {
